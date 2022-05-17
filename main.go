@@ -25,14 +25,15 @@ import (
 
 const (
 	NameSpace = "tc_info"
+	CbsMetric = "cbs"
+	EsMetric  = "es"
 )
 
 type Exporter struct {
 	logger    log.Logger
 	rateLimit int
 
-	esInstance  *prometheus.Desc
-	cbsInstance *prometheus.Desc
+	esInstance *prometheus.Desc
 }
 
 func NewExporter(rateLimit int, logger log.Logger) *Exporter {
@@ -45,19 +46,11 @@ func NewExporter(rateLimit int, logger log.Logger) *Exporter {
 			[]string{"instance_id", "name", "es_version"},
 			nil,
 		),
-
-		cbsInstance: prometheus.NewDesc(
-			prometheus.BuildFQName(NameSpace, "cbs", "instance"),
-			"cbs instance on tencent cloud",
-			[]string{"instance_id", "disk_id", "type", "name", "state"},
-			nil,
-		),
 	}
 }
 
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.esInstance
-	ch <- e.cbsInstance
 }
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
@@ -89,6 +82,41 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	for _, ins := range esResponse.Response.InstanceList {
 		ch <- prometheus.MustNewConstMetric(e.esInstance, prometheus.GaugeValue, 1,
 			[]string{*ins.InstanceId, *ins.InstanceName, *ins.EsVersion}...)
+	}
+}
+
+type CbsExporter struct {
+	logger    log.Logger
+	rateLimit int
+
+	cbsInstance *prometheus.Desc
+}
+
+func NewCbsExporter(rateLimit int, logger log.Logger) *CbsExporter {
+	return &CbsExporter{
+		logger:    logger,
+		rateLimit: rateLimit,
+
+		cbsInstance: prometheus.NewDesc(
+			prometheus.BuildFQName(NameSpace, "cbs", "instance"),
+			"cbs instance on tencent cloud",
+			[]string{"instance_id", "disk_id", "type", "name", "state"},
+			nil,
+		),
+	}
+}
+
+func (e *CbsExporter) Describe(ch chan<- *prometheus.Desc) {
+	ch <- e.cbsInstance
+}
+
+func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
+	// 连接腾讯云
+	provider := common.DefaultEnvProvider()
+	credential, err := provider.GetCredential()
+	if err != nil {
+		_ = level.Error(e.logger).Log("msg", "Failed to get credential")
+		panic(err)
 	}
 
 	// cbs collect
@@ -129,6 +157,7 @@ func main() {
 		webConfig     = webflag.AddFlags(kingpin.CommandLine)
 		listenAddress = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9150").String()
 		metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
+		enableMetrics = kingpin.Arg("metric", "Enable metric").String()
 	)
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
@@ -146,7 +175,11 @@ func main() {
 	_ = level.Info(logger).Log("msg", "Build context", "context", version.BuildContext())
 
 	prometheus.MustRegister(version.NewCollector(NameSpace))
-	prometheus.MustRegister(NewExporter(15, logger))
+	if *enableMetrics == CbsMetric {
+		prometheus.MustRegister(NewCbsExporter(15, logger))
+	} else {
+		prometheus.MustRegister(NewExporter(15, logger))
+	}
 
 	http.Handle(*metricsPath, promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
