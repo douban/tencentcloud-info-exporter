@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
 	webflag "github.com/prometheus/exporter-toolkit/web/kingpinflag"
+	cbs "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cbs/v20170312"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
@@ -30,7 +31,8 @@ type Exporter struct {
 	logger    log.Logger
 	rateLimit int
 
-	esInstance *prometheus.Desc
+	esInstance  *prometheus.Desc
+	cbsInstance *prometheus.Desc
 }
 
 func NewExporter(rateLimit int, logger log.Logger) *Exporter {
@@ -43,11 +45,19 @@ func NewExporter(rateLimit int, logger log.Logger) *Exporter {
 			[]string{"instance_id", "name", "es_version"},
 			nil,
 		),
+
+		cbsInstance: prometheus.NewDesc(
+			prometheus.BuildFQName(NameSpace, "cbs", "instance"),
+			"cbs instance on tencent cloud",
+			[]string{"instance_id", "disk_id", "type", "name", "state"},
+			nil,
+		),
 	}
 }
 
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.esInstance
+	ch <- e.cbsInstance
 }
 
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
@@ -58,14 +68,15 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		_ = level.Error(e.logger).Log("msg", "Failed to get credential")
 		panic(err)
 	}
-	client, err := es.NewClient(credential, regions.Beijing, profile.NewClientProfile())
+	// es collect
+	esClient, err := es.NewClient(credential, regions.Beijing, profile.NewClientProfile())
 	if err != nil {
 		_ = level.Error(e.logger).Log("msg", "Failed to get tencent client")
 		panic(err)
 	}
 
-	request := es.NewDescribeInstancesRequest()
-	response, err := client.DescribeInstances(request)
+	esRequest := es.NewDescribeInstancesRequest()
+	esResponse, err := esClient.DescribeInstances(esRequest)
 
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
 		fmt.Printf("An API error has returned: %s", err)
@@ -75,9 +86,41 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		panic(err)
 	}
 	// 暴露指标
-	for _, ins := range response.Response.InstanceList {
+	for _, ins := range esResponse.Response.InstanceList {
 		ch <- prometheus.MustNewConstMetric(e.esInstance, prometheus.GaugeValue, 1,
 			[]string{*ins.InstanceId, *ins.InstanceName, *ins.EsVersion}...)
+	}
+
+	// cbs collect
+	cbsClient, err := cbs.NewClient(credential, regions.Beijing, profile.NewClientProfile())
+	if err != nil {
+		_ = level.Error(e.logger).Log("msg", "Failed to get tencent client")
+		panic(err)
+	}
+	cbsRequest := cbs.NewDescribeDisksRequest()
+	cbsRequest.Limit = common.Uint64Ptr(100)
+	cbsResponse, err := cbsClient.DescribeDisks(cbsRequest)
+
+	if _, ok := err.(*errors.TencentCloudSDKError); ok {
+		fmt.Printf("An API error has returned: %s", err)
+		return
+	}
+	if err != nil {
+		panic(err)
+	}
+	cbsTotal := *cbsResponse.Response.TotalCount
+	var count = uint64(0)
+	for {
+		if count > cbsTotal {
+			break
+		}
+		for _, disk := range cbsResponse.Response.DiskSet {
+			ch <- prometheus.MustNewConstMetric(e.cbsInstance, prometheus.GaugeValue, 1,
+				[]string{*disk.InstanceId, *disk.DiskId, *disk.InstanceType, *disk.DiskName, *disk.DiskState}...)
+		}
+		count += 100
+		cbsRequest.Offset = common.Uint64Ptr(count)
+		cbsResponse, err = cbsClient.DescribeDisks(cbsRequest)
 	}
 }
 
