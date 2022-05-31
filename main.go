@@ -82,15 +82,17 @@ func (e *EsExporter) Collect(ch chan<- prometheus.Metric) {
 type CbsExporter struct {
 	logger     log.Logger
 	rateLimit  int
+	pageLimit  uint64
 	credential common.CredentialIface
 
 	cbsInstance *prometheus.Desc
 }
 
-func NewCbsExporter(rateLimit int, logger log.Logger, credential common.CredentialIface) *CbsExporter {
+func NewCbsExporter(rateLimit int, logger log.Logger, pageLimit uint64, credential common.CredentialIface) *CbsExporter {
 	return &CbsExporter{
 		logger:     logger,
 		rateLimit:  rateLimit,
+		pageLimit: pageLimit,
 		credential: credential,
 
 		cbsInstance: prometheus.NewDesc(
@@ -114,7 +116,7 @@ func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 		panic(err)
 	}
 	cbsRequest := cbs.NewDescribeDisksRequest()
-	cbsRequest.Limit = common.Uint64Ptr(100)
+	cbsRequest.Limit = common.Uint64Ptr(e.pageLimit)
 	cbsResponse, err := cbsClient.DescribeDisks(cbsRequest)
 
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
@@ -131,15 +133,27 @@ func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 			break
 		}
 		cbsResponse, err = cbsClient.DescribeDisks(cbsRequest)
-		if _, ok := err.(*errors.TencentCloudSDKError); ok {
-			fmt.Printf("An API error has returned: %s", err)
-		} else {
-			for _, disk := range cbsResponse.Response.DiskSet {
-				ch <- prometheus.MustNewConstMetric(e.cbsInstance, prometheus.GaugeValue, 1,
-					[]string{*disk.InstanceId, *disk.DiskId, *disk.InstanceType, *disk.DiskName, *disk.DiskState}...)
+		if err != nil {
+			var retry = 3
+			for {
+				if retry == 0 {
+					break
+				}
+				cbsResponse, err = cbsClient.DescribeDisks(cbsRequest)
+				if err == nil {
+					break
+				}
+				retry--
 			}
 		}
-		count += 100
+		if err != nil {
+			panic(err)
+		}
+		for _, disk := range cbsResponse.Response.DiskSet {
+			ch <- prometheus.MustNewConstMetric(e.cbsInstance, prometheus.GaugeValue, 1,
+				[]string{*disk.InstanceId, *disk.DiskId, *disk.InstanceType, *disk.DiskName, *disk.DiskState}...)
+		}
+		count += e.pageLimit
 		cbsRequest.Offset = common.Uint64Ptr(count)
 	}
 }
@@ -151,6 +165,7 @@ func main() {
 		metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
 		enableEs      = kingpin.Flag("metrics.es", "Enable metric es").Bool()
 		enableCbs     = kingpin.Flag("metrics.cbs", "Enable metric cbs").Bool()
+		cbsPageLimit  = kingpin.Flag("cbs.page-limit", "CBS page limit, max 100").Default("100").Uint64()
 	)
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
@@ -177,7 +192,7 @@ func main() {
 
 	prometheus.MustRegister(version.NewCollector(NameSpace))
 	if *enableCbs {
-		prometheus.MustRegister(NewCbsExporter(15, logger, credential))
+		prometheus.MustRegister(NewCbsExporter(15, logger, *cbsPageLimit, credential))
 	}
 	if *enableEs {
 		prometheus.MustRegister(NewEsExporter(15, logger, credential))
