@@ -130,13 +130,17 @@ func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 		if count > cbsTotal {
 			break
 		}
-		for _, disk := range cbsResponse.Response.DiskSet {
-			ch <- prometheus.MustNewConstMetric(e.cbsInstance, prometheus.GaugeValue, 1,
-				[]string{*disk.InstanceId, *disk.DiskId, *disk.InstanceType, *disk.DiskName, *disk.DiskState}...)
+		cbsResponse, err = cbsClient.DescribeDisks(cbsRequest)
+		if _, ok := err.(*errors.TencentCloudSDKError); ok {
+			fmt.Printf("An API error has returned: %s", err)
+		} else {
+			for _, disk := range cbsResponse.Response.DiskSet {
+				ch <- prometheus.MustNewConstMetric(e.cbsInstance, prometheus.GaugeValue, 1,
+					[]string{*disk.InstanceId, *disk.DiskId, *disk.InstanceType, *disk.DiskName, *disk.DiskState}...)
+			}
 		}
 		count += 100
 		cbsRequest.Offset = common.Uint64Ptr(count)
-		cbsResponse, err = cbsClient.DescribeDisks(cbsRequest)
 	}
 }
 
