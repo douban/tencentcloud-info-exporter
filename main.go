@@ -123,6 +123,9 @@ func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 		fmt.Printf("An API error has returned: %s", err)
 		return
 	}
+	if cbsResponse != nil {
+		fmt.Printf("The API request id: %s ", *cbsResponse.Response.RequestId)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -145,6 +148,9 @@ func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 				}
 				retry--
 			}
+		}
+		if cbsResponse != nil {
+			fmt.Printf("The API request id: %s ", *cbsResponse.Response.RequestId)
 		}
 		if err != nil {
 			panic(err)
