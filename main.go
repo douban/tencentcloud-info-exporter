@@ -110,7 +110,11 @@ func (e *CbsExporter) Describe(ch chan<- *prometheus.Desc) {
 
 func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 	// cbs collect
-	cbsClient, err := cbs.NewClient(e.credential, regions.Beijing, profile.NewClientProfile())
+	cpf := profile.NewClientProfile()
+	cpf.HttpProfile.Endpoint = "cbs.tencentcloudapi.com"
+	cpf.HttpProfile.ReqTimeout = 30
+
+	cbsClient, err := cbs.NewClient(e.credential, regions.Beijing, cpf)
 	if err != nil {
 		_ = level.Error(e.logger).Log("msg", "Failed to get tencent client")
 		panic(err)
