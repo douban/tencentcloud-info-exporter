@@ -168,7 +168,7 @@ func main() {
 		enableCbs     = kingpin.Flag("metrics.cbs", "Enable metric cbs").Bool()
 		cbsPageLimit  = kingpin.Flag("cbs.page-limit", "CBS page limit, max 100").Default("100").Uint64()
 		debug         = kingpin.Flag("debug", "Enable debug log").Default("false").Bool()
-		timeOut       = kingpin.Flag("timeout", "SDK timeout").Default("30").Int()
+		timeout       = kingpin.Flag("timeout", "SDK timeout").Default("30").Int()
 	)
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
@@ -197,7 +197,7 @@ func main() {
 	if *enableCbs {
 		cpf := profile.NewClientProfile()
 		cpf.Debug = *debug
-		cpf.HttpProfile.ReqTimeout = *timeOut
+		cpf.HttpProfile.ReqTimeout = *timeout
 		cbsClient, err := cbs.NewClient(credential, regions.Beijing, cpf)
 		if err != nil {
 			_ = level.Error(logger).Log("msg", "Failed to get tencent client")
