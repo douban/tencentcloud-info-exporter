@@ -120,10 +120,11 @@ func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 	}
 	if err != nil {
 		if cbsResponse != nil {
-			fmt.Printf("The API request id: %s ", *cbsResponse.Response.RequestId)
+			_ = level.Error(e.logger).Log("error", "The API request id", *cbsResponse.Response.RequestId)
 		}
 		panic(err)
 	}
+	_ = level.Debug(e.logger).Log("msg", "request success, request id: ", cbsResponse.Response.RequestId)
 	cbsTotal := *cbsResponse.Response.TotalCount
 	var count = uint64(0)
 	for {
@@ -150,6 +151,7 @@ func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 			}
 			panic(err)
 		}
+		_ = level.Debug(e.logger).Log("msg", "request success, request id: %s", cbsResponse.Response.RequestId)
 		for _, disk := range cbsResponse.Response.DiskSet {
 			ch <- prometheus.MustNewConstMetric(e.cbsInstance, prometheus.GaugeValue, 1,
 				[]string{*disk.InstanceId, *disk.DiskId, *disk.InstanceType, *disk.DiskName, *disk.DiskState}...)
