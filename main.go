@@ -80,20 +80,20 @@ func (e *EsExporter) Collect(ch chan<- prometheus.Metric) {
 }
 
 type CbsExporter struct {
-	logger     log.Logger
-	rateLimit  int
-	pageLimit  uint64
-	credential common.CredentialIface
+	logger    log.Logger
+	rateLimit int
+	pageLimit uint64
+	client    *cbs.Client
 
 	cbsInstance *prometheus.Desc
 }
 
-func NewCbsExporter(rateLimit int, logger log.Logger, pageLimit uint64, credential common.CredentialIface) *CbsExporter {
+func NewCbsExporter(rateLimit int, logger log.Logger, pageLimit uint64, client *cbs.Client) *CbsExporter {
 	return &CbsExporter{
-		logger:     logger,
-		rateLimit:  rateLimit,
+		logger:    logger,
+		rateLimit: rateLimit,
 		pageLimit: pageLimit,
-		credential: credential,
+		client:    client,
 
 		cbsInstance: prometheus.NewDesc(
 			prometheus.BuildFQName(NameSpace, "cbs", "instance"),
@@ -110,14 +110,9 @@ func (e *CbsExporter) Describe(ch chan<- *prometheus.Desc) {
 
 func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 	// cbs collect
-	cbsClient, err := cbs.NewClient(e.credential, regions.Beijing, profile.NewClientProfile())
-	if err != nil {
-		_ = level.Error(e.logger).Log("msg", "Failed to get tencent client")
-		panic(err)
-	}
 	cbsRequest := cbs.NewDescribeDisksRequest()
 	cbsRequest.Limit = common.Uint64Ptr(e.pageLimit)
-	cbsResponse, err := cbsClient.DescribeDisks(cbsRequest)
+	cbsResponse, err := e.client.DescribeDisks(cbsRequest)
 
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
 		fmt.Printf("An API error has returned: %s", err)
@@ -135,14 +130,14 @@ func (e *CbsExporter) Collect(ch chan<- prometheus.Metric) {
 		if count > cbsTotal {
 			break
 		}
-		cbsResponse, err = cbsClient.DescribeDisks(cbsRequest)
+		cbsResponse, err = e.client.DescribeDisks(cbsRequest)
 		if err != nil {
 			var retry = 3
 			for {
 				if retry == 0 {
 					break
 				}
-				cbsResponse, err = cbsClient.DescribeDisks(cbsRequest)
+				cbsResponse, err = e.client.DescribeDisks(cbsRequest)
 				if err == nil {
 					break
 				}
@@ -172,6 +167,8 @@ func main() {
 		enableEs      = kingpin.Flag("metrics.es", "Enable metric es").Bool()
 		enableCbs     = kingpin.Flag("metrics.cbs", "Enable metric cbs").Bool()
 		cbsPageLimit  = kingpin.Flag("cbs.page-limit", "CBS page limit, max 100").Default("100").Uint64()
+		debug         = kingpin.Flag("debug", "Enable debug log").Default("false").Bool()
+		timeOut       = kingpin.Flag("timeout", "SDK timeout").Default("30").Int()
 	)
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
@@ -198,7 +195,15 @@ func main() {
 
 	prometheus.MustRegister(version.NewCollector(NameSpace))
 	if *enableCbs {
-		prometheus.MustRegister(NewCbsExporter(15, logger, *cbsPageLimit, credential))
+		cpf := profile.NewClientProfile()
+		cpf.Debug = *debug
+		cpf.HttpProfile.ReqTimeout = *timeOut
+		cbsClient, err := cbs.NewClient(credential, regions.Beijing, cpf)
+		if err != nil {
+			_ = level.Error(logger).Log("msg", "Failed to get tencent client")
+			panic(err)
+		}
+		prometheus.MustRegister(NewCbsExporter(15, logger, *cbsPageLimit, cbsClient))
 	}
 	if *enableEs {
 		prometheus.MustRegister(NewEsExporter(15, logger, credential))
