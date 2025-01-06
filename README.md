@@ -10,6 +10,6 @@ metrics:
   - 5xx
 delay_seconds: 360
 custom_query_dimensions:
-  - projectId: 1158499
-    domain: c9.douban.com
+  - projectId: Id
+    domain: domain
 ```
