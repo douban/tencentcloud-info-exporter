@@ -1,4 +1,4 @@
-module github.com/LeoQuote/tencentcloud-info-exporter
+module tencentcloud-info-exporter
 
 go 1.16
 
@@ -10,7 +10,9 @@ require (
 	github.com/prometheus/exporter-toolkit v0.7.1
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cbs v1.0.395
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.395
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cdn v1.0.1074
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.1074
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/es v1.0.360
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
