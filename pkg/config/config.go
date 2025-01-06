@@ -16,7 +16,6 @@ type CustomQueryDimension struct {
 
 type TencentConfig struct {
 	Metrics              []string               `yaml:"metrics"`
-	RateLimit            int                    `yaml:"rate_limit"`
 	DelaySeconds         int                    `yaml:"delay_seconds"`
 	CustomQueryDimension []CustomQueryDimension `yaml:"custom_query_dimensions"`
 }
