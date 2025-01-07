@@ -61,7 +61,7 @@ func (e *CdnExporter) Collect(ch chan<- prometheus.Metric) {
 		Format("2006-01-02 15:04:05")
 
 	var wg sync.WaitGroup
-	limiter := rate.NewLimiter(rate.Limit(e.tencentConfig.RateLimit), e.tencentConfig.RateLimit)
+	limiter := rate.NewLimiter(rate.Limit(e.tencentConfig.RateLimit), 1)
 
 	for _, dimension := range e.tencentConfig.CDN.CustomQueryDimension {
 		cdnRequest := cdn.NewDescribeCdnDataRequest()
