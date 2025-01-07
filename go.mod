@@ -1,4 +1,4 @@
-module tencentcloud-info-exporter
+module github.com/dddfiish/tencentcloud-info-exporter
 
 go 1.16
 

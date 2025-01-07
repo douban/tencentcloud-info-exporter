@@ -3,8 +3,8 @@ FROM golang:alpine as build-env
 RUN apk add git
 
 # Copy source + vendor
-COPY . /go/src/github.com/leoquote/tencentcloud-info-exporter
-WORKDIR /go/src/github.com/leoquote/tencentcloud-info-exporter
+COPY . /go/src/github.com/dddfiish/tencentcloud-info-exporter
+WORKDIR /go/src/github.com/dddfiish/tencentcloud-info-exporter
 
 # Build
 ENV GOPATH=/go
