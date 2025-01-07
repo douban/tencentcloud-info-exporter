@@ -53,14 +53,10 @@ func (e *CdnExporter) Collect(ch chan<- prometheus.Metric) {
 		panic(err)
 	}
 
-	location, err := time.LoadLocation("Asia/Shanghai")
-	if err != nil {
-		_ = level.Error(e.logger).Log("msg", "failed to load location")
-		panic(err)
-	}
 	timeStr := time.Now().
 		Add(-time.Duration(e.tencentConfig.DelaySeconds) * time.Second).
-		In(location).Format("2006-01-02 15:04:05")
+		In(time.FixedZone("Asia/Shanghai", 8*3600)).
+		Format("2006-01-02 15:04:05")
 
 	var wg sync.WaitGroup
 
