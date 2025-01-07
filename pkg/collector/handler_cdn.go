@@ -2,6 +2,7 @@ package collector
 
 import (
 	"fmt"
+	"github.com/dddfiish/tencentcloud-info-exporter/pkg/config"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,7 +13,6 @@ import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/regions"
 	"math"
 	"sync"
-	"tencentcloud-info-exporter/pkg/config"
 	"time"
 )
 

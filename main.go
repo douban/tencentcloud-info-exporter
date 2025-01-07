@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/dddfiish/tencentcloud-info-exporter/pkg/collector"
+	"github.com/dddfiish/tencentcloud-info-exporter/pkg/config"
 	"github.com/go-kit/log/level"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,8 +20,6 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
 	"os"
-	"tencentcloud-info-exporter/pkg/collector"
-	"tencentcloud-info-exporter/pkg/config"
 )
 
 func main() {

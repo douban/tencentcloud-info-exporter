@@ -2,13 +2,13 @@ package collector
 
 import (
 	"fmt"
+	"github.com/dddfiish/tencentcloud-info-exporter/pkg/config"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	cbs "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cbs/v20170312"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
-	"tencentcloud-info-exporter/pkg/config"
 )
 
 type CbsExporter struct {
