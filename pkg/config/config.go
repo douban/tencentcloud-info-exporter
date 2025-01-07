@@ -14,10 +14,15 @@ type CustomQueryDimension struct {
 	Domain    string `yaml:"domain"`
 }
 
-type TencentConfig struct {
+type CDNConfig struct {
 	Metrics              []string               `yaml:"metrics"`
 	DelaySeconds         int                    `yaml:"delay_seconds"`
 	CustomQueryDimension []CustomQueryDimension `yaml:"custom_query_dimensions"`
+}
+
+type TencentConfig struct {
+	RateLimit int       `yaml:"rate_limit"`
+	CDN       CDNConfig `yaml:"cdn"`
 }
 
 func (c *TencentConfig) LoadFile(filename string) error {

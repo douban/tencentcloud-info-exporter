@@ -27,7 +27,7 @@ func main() {
 		webConfig     = webflag.AddFlags(kingpin.CommandLine)
 		listenAddress = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9150").String()
 		metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
-		configFile    = kingpin.Flag("config.file", "Tencent qcloud exporter configuration file.").Default("cdn.yaml").String()
+		configFile    = kingpin.Flag("config.file", "Tencent qcloud exporter configuration file.").Default("qcloud.yaml").String()
 		enableEs      = kingpin.Flag("metrics.es", "Enable metric es").Bool()
 		enableCbs     = kingpin.Flag("metrics.cbs", "Enable metric cbs").Bool()
 		enableCDN     = kingpin.Flag("metrics.cdn", "Enable metric cdn").Default("true").Bool()
@@ -88,7 +88,7 @@ func main() {
 	}
 
 	if *enableCDN {
-		prometheus.MustRegister(collector.NewCdnExporter(20, logger, credential, *tencentConfig))
+		prometheus.MustRegister(collector.NewCdnExporter(logger, credential, *tencentConfig))
 	}
 
 	http.Handle(*metricsPath, promhttp.Handler())
