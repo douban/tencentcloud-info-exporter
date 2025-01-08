@@ -6,7 +6,6 @@ import (
 	"github.com/go-kit/log/level"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
@@ -46,7 +45,6 @@ func main() {
 	// load config file
 	if err := tencentConfig.LoadFile(*configFile); err != nil {
 		_ = level.Error(logger).Log("msg", "Load config error", "err", err)
-		os.Exit(1)
 	} else {
 		_ = level.Info(logger).Log("msg", "Load config ok")
 	}
@@ -68,8 +66,6 @@ func main() {
 	}
 
 	prometheus.MustRegister(version.NewCollector(config.NameSpace))
-	prometheus.Unregister(collectors.NewGoCollector())
-	prometheus.Unregister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 
 	if *enableCbs {
 		cpf := profile.NewClientProfile()

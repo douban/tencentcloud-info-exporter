@@ -27,6 +27,15 @@ type CdnExporter struct {
 	cdnInstance *prometheus.Desc
 }
 
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}
+
 func NewCdnExporter(logger log.Logger, credential common.CredentialIface, tencentConfig config.TencentConfig) *CdnExporter {
 	return &CdnExporter{
 		logger:        logger,
@@ -120,6 +129,9 @@ func (e *CdnExporter) Collect(ch chan<- prometheus.Metric) {
 				}
 
 				for _, data := range cdnResponse.Response.Data[0].CdnData {
+					if !contains(e.tencentConfig.CDN.OnlyIncludeMetrics, *data.Metric) {
+						continue
+					}
 					ch <- prometheus.MustNewConstMetric(
 						e.cdnInstance,
 						prometheus.GaugeValue,

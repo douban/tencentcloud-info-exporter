@@ -16,6 +16,7 @@ type CustomQueryDimension struct {
 
 type CDNConfig struct {
 	Metrics              []string               `yaml:"metrics"`
+	OnlyIncludeMetrics   []string               `yaml:"only_include_metrics"`
 	DelaySeconds         int                    `yaml:"delay_seconds"`
 	CustomQueryDimension []CustomQueryDimension `yaml:"custom_query_dimensions"`
 }

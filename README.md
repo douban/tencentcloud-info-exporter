@@ -4,13 +4,11 @@
 
 ```yaml
 rate_limit: 20
-
 cdn:
   metrics:
-    - 2xx
-    - 3xx
-    - 4xx
     - 5xx
+  only_include_metrics:
+    - 566
   delay_seconds: 360
   custom_query_dimensions:
     - projectId: id
