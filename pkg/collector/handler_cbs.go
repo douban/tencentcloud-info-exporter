@@ -2,7 +2,7 @@ package collector
 
 import (
 	"fmt"
-	"github.com/dddfiish/tencentcloud-info-exporter/pkg/config"
+	"github.com/douban/tencentcloud-info-exporter/pkg/config"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
