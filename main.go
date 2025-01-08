@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/LeoQuote/tencentcloud-info-exporter/pkg/collector/pkg/collector"
+	"github.com/LeoQuote/tencentcloud-info-exporter/pkg/collector"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/joho/godotenv"

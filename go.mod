@@ -1,4 +1,4 @@
-module github.com/LeoQuote/tencentcloud-info-exporter/pkg/collector
+module github.com/LeoQuote/tencentcloud-info-exporter
 
 go 1.16
 
