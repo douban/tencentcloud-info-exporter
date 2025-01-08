@@ -1,4 +1,4 @@
-module github.com/douban/tencentcloud-info-exporter
+module github.com/LeoQuote/tencentcloud-info-exporter/pkg/collector
 
 go 1.16
 
@@ -14,5 +14,4 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/es v1.0.360
 	golang.org/x/time v0.9.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
-	gopkg.in/yaml.v2 v2.4.0
 )
