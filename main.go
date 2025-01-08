@@ -29,7 +29,7 @@ func main() {
 		configFile    = kingpin.Flag("config.file", "Tencent qcloud exporter configuration file.").Default("qcloud.yaml").String()
 		enableEs      = kingpin.Flag("metrics.es", "Enable metric es").Bool()
 		enableCbs     = kingpin.Flag("metrics.cbs", "Enable metric cbs").Bool()
-		enableCDN     = kingpin.Flag("metrics.cdn", "Enable metric cdn").Default("true").Bool()
+		enableCDN     = kingpin.Flag("metrics.cdn", "Enable metric cdn").Bool()
 		cbsPageLimit  = kingpin.Flag("cbs.page-limit", "CBS page limit, max 100").Default("100").Uint64()
 		debug         = kingpin.Flag("debug", "Enable debug log").Default("false").Bool()
 		timeout       = kingpin.Flag("timeout", "SDK timeout").Default("30").Int()
