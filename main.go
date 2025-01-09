@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/LeoQuote/tencentcloud-info-exporter/pkg/collector"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/joho/godotenv"
@@ -168,6 +169,9 @@ func main() {
 		metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
 		enableEs      = kingpin.Flag("metrics.es", "Enable metric es").Bool()
 		enableCbs     = kingpin.Flag("metrics.cbs", "Enable metric cbs").Bool()
+		enableCDN     = kingpin.Flag("metrics.cdn", "Enable metric cdn").Bool()
+		delaySeconds  = kingpin.Flag("delay-seconds", "Delay in seconds").Default("360").Int()
+		Domains       = kingpin.Flag("domains", "domains").Strings()
 		cbsPageLimit  = kingpin.Flag("cbs.page-limit", "CBS page limit, max 100").Default("100").Uint64()
 		debug         = kingpin.Flag("debug", "Enable debug log").Default("false").Bool()
 		timeout       = kingpin.Flag("timeout", "SDK timeout").Default("30").Int()
@@ -209,6 +213,9 @@ func main() {
 	}
 	if *enableEs {
 		prometheus.MustRegister(NewEsExporter(15, logger, credential))
+	}
+	if *enableCDN {
+		prometheus.MustRegister(collector.NewCdnExporter(15, *delaySeconds, *Domains, logger, credential))
 	}
 
 	http.Handle(*metricsPath, promhttp.Handler())
