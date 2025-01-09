@@ -123,9 +123,6 @@ func (e *CdnExporter) Collect(ch chan<- prometheus.Metric) {
 			}
 
 			for _, data := range cdnResponse.Response.Data[0].CdnData {
-				if *data.Metric != "566" {
-					continue
-				}
 				ch <- prometheus.MustNewConstMetric(
 					e.cdnInstance,
 					prometheus.GaugeValue,
